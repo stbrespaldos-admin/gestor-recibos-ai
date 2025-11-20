@@ -1,0 +1,7 @@
+{
+  "name": "Gestor de Recibos AI",
+  "description": "Gestión automatizada de recibos y gastos usando Gemini AI. Sube o pega imágenes para extraer datos al instante.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
