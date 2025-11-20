@@ -16,7 +16,7 @@ export const analyzeReceiptImage = async (base64Image: string): Promise<Partial<
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview', 
+      model: 'gemini-2.5-flash', 
       contents: {
         parts: [
           {
