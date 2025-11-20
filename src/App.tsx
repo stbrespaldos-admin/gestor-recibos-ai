@@ -62,9 +62,11 @@ const App: React.FC = () => {
       setNotification("Datos extraídos. Por favor verifica e ingresa la cédula.");
       setIsReviewOpen(true);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload failed", error);
-      setNotification("Error al procesar. Verifica tu API Key o intenta de nuevo.");
+      // Mostrar el mensaje real del error si está disponible
+      const errorMessage = error.message || "Error desconocido";
+      setNotification(`Error: ${errorMessage}`);
       setIsProcessing(false);
     }
   }, []);

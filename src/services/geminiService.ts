@@ -1,19 +1,24 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ReceiptData, ReceiptStatus } from "../types";
 
-// Initialize Gemini Client using VITE environment variable
-// Vercel will inject VITE_API_KEY during build
-const apiKey = import.meta.env.VITE_API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// IMPORTANTE: En Vite/Vercel, las variables deben accederse con import.meta.env
+// y deben tener el prefijo VITE_
+const apiKey = import.meta.env.VITE_API_KEY;
+
+// Validación temprana para ayudar a depurar
+if (!apiKey) {
+  console.error("CRITICAL ERROR: VITE_API_KEY is missing or empty.");
+  console.error("Make sure you added VITE_API_KEY in Vercel Settings -> Environment Variables");
+} else {
+  console.log("Gemini Service initialized successfully with API Key present.");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey || "dummy_key_to_prevent_crash" });
 
 /**
  * Analyzes a base64 image string using Gemini to extract receipt data.
  */
 export const analyzeReceiptImage = async (base64Image: string): Promise<Partial<ReceiptData>> => {
-  if (!apiKey) {
-    throw new Error("API Key no configurada. Asegúrate de agregar VITE_API_KEY en Vercel.");
-  }
-
   // Extract mime type dynamically
   const mimeTypeMatch = base64Image.match(/^data:(image\/\w+);base64,/);
   const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/webp'; // Default to webp as we compress to it
@@ -22,6 +27,10 @@ export const analyzeReceiptImage = async (base64Image: string): Promise<Partial<
   const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
   try {
+    if (!apiKey) {
+      throw new Error("Falta la API Key. Configura VITE_API_KEY en Vercel.");
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview', 
       contents: {
@@ -89,8 +98,12 @@ export const analyzeReceiptImage = async (base64Image: string): Promise<Partial<
       status: ReceiptStatus.VERIFIED,
     };
 
-  } catch (error) {
-    console.error("Gemini Analysis Error:", error);
+  } catch (error: any) {
+    console.error("Gemini Analysis Error Full Details:", error);
+    // Check for common quota or permission errors
+    if (error.message?.includes('403')) throw new Error("Error 403: API Key inválida o sin permisos.");
+    if (error.message?.includes('429')) throw new Error("Error 429: Cuota excedida en Gemini.");
+    if (error.message?.includes('dummy_key')) throw new Error("Error Config: Falta VITE_API_KEY en Vercel.");
     throw error;
   }
 };
